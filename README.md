@@ -1,11 +1,3 @@
-Kevin Da Silva, Alberto Monari, Antoine Settelen, Simon Weiss
----
-
-~1 week development
-
-Notebook link : https://13w13.github.io/U3_Database-Management_SQL_NoSQL/
-
-
 ## PART I: SQL PROJECT
 
 ### Project description:
@@ -76,5 +68,3 @@ a. Query:
 b. Result:  
 c. Analysis/interpretation:  
 d. Recommendations:  
-
-Good reading ! 
