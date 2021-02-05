@@ -1,0 +1,1141 @@
+---
+title: "Database Management end of Course Project  SQL/ NoSQL Project"
+author: "Kevin Da Silva, Alberto Monari, Antoine Settelen, Simon Weiss"
+date: "`r Sys.Date()`"
+output:
+ html_document:
+    toc: true
+    toc_float: true
+---
+
+## PART I: SQL PROJECT
+
+### Project description:
+
+BAKERS is a software development company that has been existing since the 1980s. With the current evolution in AI and business analytic, they are far behind the competition in terms of **productivity**. The CEO believes the issue comes from his employees so he decides to hire a new human resource **(HR) manager**.
+The new HR manager is who just arrived seeks to understand the employee structure of the company to determine if the employees could be the reason why the company is not very competitive in today's software business industry and how to solve this issue if it is the case. To this end, the HR manager learns that there is a database that contains **all information on the employees in the company** and also learns that there is a business analysis team in the company that provides analytic support to other departments. HR decides to reach out to have their informed opinion on the current situation of employees in the company and what could be done to improve the situation.
+
+### Exercise
+You are the **team of business analysts** working for BAKERS. Based on the HR's request, you are expected to make at least **15 recommendations** on how to improve the **state** and **conditions** of employees in the company to make it **more competitive** in its industry. Be creative - your advice can be anything meaningful for the HR (e.g. hire new staff, increase salaries for a given group of employees, fire some employees, etc.). All your justifications **MUST be based on evidence from the database**. Each suggestion should be presented in four subsections:
+
++ Query  
++ Result  
++ Analysis/interpretation 
++ Recommendations
+
+
+HR has also provided a **list of requests** that must be completed. You are expected to provide a minimum of **10 recommendations** based on the requests of the HR, and a minimum of **five recommendations based on queries** you conceived as an expert. One query can lead to more than one recommendation.
+
+Follow the instructions carefully. Do not provide irrelevant columns. All your column titles should bare meaningful and well-formatted headings. For example, do not provide employee ID if it is not necessary/required to understand your suggestion. However, your tables should have rich content for the manager. For example, if the list of employees with the lowest salary is requested, it will be better if you provide the name of the employee, the salary earned, and add the department and/or job title or years of experience to help develop interesting insights and arguments.
+
+
+
+List of queries that must be completed for the HR.
+The HR manager will like you to please provide the following information (remember: the queries and the results (provide first 10 rows if the result is a table)):
+
+
+
+1. List of employees with the following information: First name, last name, gender, age, number of years spent in the company, department, the year they joined the department, and their current job title.
+2. The number of employees per department.
+3. List of employees per department, their positions, and salaries. Make a separate list for each department.
+4. List of the average salary of employees in each job position (title).
+5. List of the average age of employees in (i) the company, (ii) each department, (iii) each job position.
+6. What is the ratio of me to women in (i) each department; (ii) each job position (title).
+7. List of employees with (i) the lowest salary, (ii) the highest salary (iii) above average salary. Please do not forget to mention the lowest and highest salary amount. The currency is Euro.
+8. List of employees who joined the company in December.
+9. List of the most experienced employees (by the number of years) in each department and the company as a whole.
+10. List of the most recently hired employees (that is, the year the most recent employee was recruited).
+
+
+To meet your objectives, the database administrator has provided you with a MySQL database for employees. Figure 1 presents the database schema. You are expected to query the database provided to obtain the information necessary for you to advise the new HR. To setup the database, it suffices to import the "employees.sql" file in the employees zipped folder provided. DO NOT DELETE ANY FILE IN THE FOLDER PROVIDED! Make sure to use MySQL workbench or MySQL shell to avoid incompatibilities.
+
+
+### Hypothesis used for the analysis
+The department's analytic team would like to specify the main hypothesis after receiving this database. 
+All the analyses are carried out at the **date 2020**. We therefore place ourselves in the situation where the database we received from HR is __up to date for this year__. 
+
+
+### Query 1 : List of employees with information. 
+List of employees with the following information: First name, last name, gender, age, number of years spent in the company, department, the year they joined the department, and their current job title.
+
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, gender, dept_name, TIMESTAMPDIFF(YEAR,birth_date,NOW()) AS age, TIMESTAMPDIFF(YEAR,hire_date,NOW()) AS years_in_the_company, dept_name, YEAR(de.from_date) AS year_of_entrance_in_the_department, title
+FROM employees AS e
+INNER JOIN dept_emp AS de
+ON e.emp_no = de.emp_no
+INNER JOIN departments AS d
+ON de.dept_no = d.dept_no
+INNER JOIN titles AS t
+ON e.emp_no = t.emp_no
+WHERE t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+AND de.to_date > CURDATE() #esclude the people who are now retired
+ORDER BY 1, 2
+LIMIT 10;
+
+```
+
+
+#### Result
+
+![List of employees with informations](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query1.PNG)
+
+#### Analysis
+
+The database given by the database administrator is well structured and seems to be of good quality as we can clearly read on this first query.   
+This first query provides an overview of the employees by aggregating information from different tables. 
+
+
+#### Recommendations
+If it is not already done, it would be possible __to export this table__ to the HR department __in csv or excel__ so that the department has a database that can be used by them and updated. 
+
+### Query 2 : The number of employees per department
+
+```{sql, eval=F, echo=T}
+SELECT dept_name, COUNT(*) AS nb_of_employes
+FROM dept_emp AS de
+INNER JOIN departments AS d
+ON d.dept_no = de.dept_no
+WHERE de.to_date > CURDATE() #exclude the people who are not anymore in the department (retired, who left the company, who changed the department...)
+GROUP BY d.dept_no
+ORDER BY 2 DESC;
+```
+
+
+#### Result
+![The number of employees per department](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query2.PNG)
+
+
+#### Analysis
+
+Baker's HR structure seems to rely primarily on an __active pool of developers and producers__. Supported by the third largest department in terms of employees, Sales, these two departments deploy and produce software and then sell it. 
+
+
+#### Recommendations
+This seems to be a very classic structure of a software company developing in the 2000s. 
+However, we can notice the very low weight of the research department, essential in the AI sector and the customer service department, crucial in the analytics business (understanding and accompanying the customer needs and not only selling at any price).   
+Thus, one could recommend more __interdepartmental transfers__. Encourage developers to go to the __research department__ for some time or foster recruitment in __under-represented but strategic departments__. 
+
+
+### Query 3 : List of employees per department, their positions, and salaries. 
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, dept_name, salary, title
+FROM employees AS e
+INNER JOIN dept_emp AS de
+ON de.emp_no = e.emp_no
+INNER JOIN departments AS d
+ON de.dept_no = d.dept_no
+INNER JOIN  salaries AS s 
+ON e.emp_no = s.emp_no
+INNER JOIN titles AS t
+ON e.emp_no = t.emp_no
+WHERE de.to_date > CURDATE() #exclude the people who are not anymore in the department (retired, who left the company, who changed the department...)
+AND t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+AND s.to_date > CURDATE() #include only current salary
+ORDER BY 3, 2, 1
+LIMIT 10;
+```
+Make a separate list for each department.
+
+```{sql, eval=F, echo=T}
+SELECT departments.dept_name as 'Department', GROUP_CONCAT(
+CONCAT_WS(', ', employees.first_name, employees.last_name,  titles.title,  salaries.salary) SEPARATOR " / " )
+as 'Employees, their positions and their salaries'
+FROM employees
+INNER JOIN dept_emp ON dept_emp.emp_no = employees.emp_no
+LEFT JOIN departments ON departments.dept_no = dept_emp.dept_no
+INNER JOIN titles ON titles.emp_no = employees.emp_no
+INNER JOIN salaries ON salaries.emp_no = employees.emp_no AND salaries.to_date = '9999-01-01'
+GROUP BY departments.dept_no;
+```
+
+
+
+
+#### Result
+![List of employees per department, their positions, and salaries.](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query3.PNG)
+
+
+![Seperated list for each department](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query3bis.PNG)
+
+
+
+
+#### Recommendations
+
+These lists can be sent to the HR department __in csv or xls format for further internal analysis. __
+
+
+### Query 4 : List of the average salary of employees in each job position (title).
+
+```{sql, eval=F, echo=T}
+SELECT title, ROUND(AVG(salary)) AS avg_salary
+FROM salaries AS s
+INNER JOIN titles AS t
+ON  s.emp_no = t.emp_no
+WHERE s.to_date > CURDATE() #include only current salary
+AND t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+GROUP BY 1
+ORDER BY 2 DESC;
+
+```
+
+
+#### Result 
+![List of the average salary of employees in each job position (title)](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query4.PNG)
+
+
+#### Analysis
+
+According to indeed.com data, the average salary for a engineer is __$71,220 per year__ in the United States (november 2020) and __$107,376 per year__ for Software Engineer. Here we can observe a__ considerable gap__ between these average figures and the average engineer's salary. One could assume that salaries are not updated to 2020, but this would contradict our initial hypothesis. In any case this gap seems significant with market prices.   
+Talent recruitment is a key point to maintain productivity and competitiveness in the software market. 
+
+#### Recommendations
+
+Thus, a first recommendation would be to __increase the salary level of engineers__ and review recruitment strategies in order to attract the most __competitive engineers on the market. __
+
+For the other positions, the analysis team does not have enough data to truly make definitive recommendations. However, Bakers HR department could review its salary policy to ensure that staff and technical leaders, who are better paid than the average engineer, __bring truly productivity among teams. __
+
+### Query 5 : List of the average age of employees
+
+#### Query 5.1 : List of the average age of employees in (i) the company
+
+
+```{sql, eval=F, echo=T}
+SELECT AVG(TIMESTAMPDIFF(year,birth_date,NOW())) AS avg_age
+FROM employees AS e;
+```
+
+
+#### Result 
+![List of the average age of employees in the company](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query5.PNG)
+
+
+#### Analysis
+
+This average age is extremely high for a technology company. According to [Business Insider](https://i.insider.com/59b69ba145e2381d008b64f5?width=800&format=jpeg&auto=webp), the average age of IBM employee was __38 in 2017 and 33 years old for Microsoft__. 
+
+
+#### Recommendations
+
+Are "young people just smarter", as Mark Zuckerberg claimed in 2007, or are young people better able to __bring about technological change__ and increase their company's competitiveness? 
+We leave this answer to the Strategic teams. It seems clear, however, that Backer has a real need to review its __recruitment policy__, which for the most part allowed its former employees recruited in the 1980s __to end their careers here__, closing the doors to younger people. 
+
+#### Query 5.2 : Each department
+
+
+```{sql, eval=F, echo=T}
+SELECT dept_name, AVG(TIMESTAMPDIFF(year,birth_date,now())) AS avg_age
+FROM employees AS e
+INNER JOIN dept_emp AS de
+ON e.emp_no = de. emp_no
+INNER JOIN departments AS d
+ON d.dept_no = de.dept_no
+WHERE de.to_date > CURDATE()  #exclude the people who are not anymore in the department (retired, who left the company, who changed the department...)
+GROUP BY 1
+ORDER BY 2;
+```
+
+#### Result 
+![List of the average age of employees in the company](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query5.2.PNG)
+
+
+#### Analysis
+The average age per department is __homogeneous,__ there are no departments that are really younger or older. 
+The analysis observed in 5.1 is confirmed. Let's analyse average age by job position. 
+
+#### Recommendations
+Same Recommendations 5.1.
+
+
+#### Query 5.3 : Each job position
+
+
+```{sql, eval=F, echo=T}
+SELECT title, AVG(TIMESTAMPDIFF(year,birth_date,now())) AS avg_age
+FROM employees AS e
+INNER JOIN titles AS t
+ON e.emp_no = t. emp_no
+WHERE t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+GROUP BY 1
+ORDER BY 2;
+
+```
+
+#### Result 
+![Each job position](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query5.3.PNG)
+
+
+#### Analysis
+Managers are on average 1 year younger than other employees of the company. 
+This small difference does not change __analysis 5.1, which remains the main analysis__. The structure of middle-aged positions remains very old in line with other companies in the sector. 
+
+
+#### Recommendations
+
+Recruitment of younger people, more trainings between senior and junior,
+
+### Query 6 : What is the ratio of men to women
+#### Query 6.1 : What is the ratio of men to women in (i) each department 
+
+
+```{sql, eval=F, echo=T}
+SELECT dept_name, SUM(CASE WHEN gender = "M" THEN 1 ELSE 0 END)/SUM(CASE WHEN gender = "F" THEN 1 ELSE 0 END) AS men_women_ratio
+FROM employees AS e
+INNER JOIN dept_emp AS de
+ON e.emp_no = de. emp_no 
+INNER JOIN departments AS d
+ON d.dept_no = de.dept_no
+WHERE de.to_date > CURDATE()  #exclude the people who are not anymore in the department (retired, who left the company, who changed the department...)
+GROUP BY 1
+ORDER BY 2;
+
+```
+
+
+#### Result 
+![The ratio of men to women in each department ](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query6.1.PNG)
+
+
+#### Analysis
+
+As many technology companies, the ratio of men employed in our company is __more important than the ratio of women.__ 
+However, although it requires greater efforts to erase this gap, we can note that the ratio in our company __is not as important as the ratio in GAFAM__. 
+Indeed, according to Statistica, in 2020 about __25% of GAFAM's employees__ are female and the ratio of men to women in engineering is __5:1.__The average ratio within our company seems to be around __1.5.__ 
+
+#### Recommendations
+Technology, and more particularly Artificial Intelligence, cannot be achieved without __a true cultural and gender mix.__ Tomorrow's AI will have to talk __to everyone.__ 
+Recruitment that is more attentive to gender diversity is essential, as well as support for the training of women developers and will bring __key factors of competitiveness to the market. __
+
+#### Query 6.2 : (ii) each job position (title)
+
+
+```{sql, eval=F, echo=T}
+SELECT title, SUM(CASE WHEN gender = "M" THEN 1 ELSE 0 END)/SUM(CASE WHEN gender = "F" THEN 1 ELSE 0 END) AS men_women_ratio
+FROM employees AS e
+INNER JOIN titles AS t
+ON e.emp_no = t.emp_no
+WHERE t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+GROUP BY 1
+ORDER BY 2;
+```
+
+
+#### Result 
+![Each job position (title)](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query6.2.PNG)
+
+
+#### Analysis
+
+We can observe a significant reduction __in the ratio of men in management positions__. 
+
+#### Recommendations
+
+This decrease is to be congratulated and __encouraged for all management positions__. 
+
+
+
+### Query 7 : List of employees with (i) the lowest salary, (ii) the highest salary (iii) above average salary.
+
+#### Query 7.1 : List of employees with (i) the lowest salary
+
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, min_salary, gender, TIMESTAMPDIFF(YEAR,birth_date,NOW()) AS age, TIMESTAMPDIFF(YEAR,hire_date,NOW()) AS years_in_the_company
+FROM employees AS e
+INNER JOIN salaries AS s
+ON e.emp_no = s.emp_no
+INNER JOIN (SELECT MIN(salary) AS min_salary FROM salaries) AS m
+ON s.salary = m.min_salary
+WHERE s.to_date > CURDATE() #include only current salary
+ORDER BY 3;
+```
+
+
+#### Result 
+![List of employees with (i) the lowest salary](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query7.1.PNG)
+
+
+
+#### Query 7.2 : the highest salary
+
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, max_salary, gender, TIMESTAMPDIFF(YEAR,birth_date,NOW()) AS age, TIMESTAMPDIFF(YEAR,hire_date,NOW()) AS years_in_the_company
+FROM employees AS e
+INNER JOIN salaries AS s
+ON e.emp_no = s.emp_no 
+INNER JOIN (SELECT MAX(salary) AS max_salary FROM salaries) AS m
+ON s.salary = m.max_salary
+WHERE s.to_date > CURDATE() #include only current salary
+ORDER BY 3 DESC;
+```
+
+
+#### Result 
+![the highest salary](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query7.2.PNG)
+
+
+
+#### Query 7.3 : above average salary
+
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, salary, gender, TIMESTAMPDIFF(YEAR,birth_date,NOW()) AS age, TIMESTAMPDIFF(YEAR,hire_date,NOW()) AS years_in_the_company
+FROM employees AS e
+INNER JOIN salaries AS s
+ON e.emp_no = s.emp_no 
+WHERE salary > (SELECT AVG(salary) FROM employees.salaries)
+AND s.to_date > CURDATE() #include only current salary
+ORDER BY 3 DESC
+LIMIT 10
+
+```
+
+
+#### Result 
+![Above average salary](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query7.3.PNG)
+
+
+#### Analysis
+
+In general, the most important factor influencing the salary is the __number of years in the company:__ in fact, the one with the highest salary in the company has worked 9 years longer in the company than the one with the lowest salary in the company. In addition, those who have the highest salary in the company __have worked more than 30 years in the company__.
+Another factor that influences the salary __is gender__: it can be seen that among those who have the above average salary, __most are male.__
+
+
+#### Recommendations
+
+The proportionality between the number of years worked in the company and the salary seems logical. 
+Be more careful that for the same number of years worked and role, __there is no gender difference__, so that there are about the same number of males and females in the above-average and below-average salaries.
+
+### Query 8 : List of employees who joined the company in December.
+
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, hire_date,title
+FROM employees AS e, titles AS t
+WHERE EXTRACT(MONTH FROM hire_date) = 12 AND e.emp_no=t.emp_no
+ORDER BY 3 DESC
+LIMIT 10;
+```
+
+
+#### Result 
+![List of employees who joined the company in December](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query8.PNG)
+
+
+#### Analysis
+
+The majority of the new recruitment __concern staff.__ 
+For two new engineers, one assistant and one senior are recruited with one technique leader. 
+This suggests that there is already a change in the company's recruitment policy. 
+By recruiting more staff, and not more engineers, the company is relying on its pool of engineers.
+
+#### Recommendations
+
+Recruitment of more __young engineers, decelerate the recruitment of senior engineers, promote assistant and senior training.__
+
+
+### Query 9 : List of the most experienced employees (by the number of years) in each department and the company as a whole.
+
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, dept_name, YEAR(CURDATE())-YEAR(hire_date) AS 'Years in the company'
+FROM employees AS e
+INNER JOIN dept_emp AS de
+ON e.emp_no = de.emp_no
+INNER JOIN departments AS d
+ON de.dept_no = d.dept_no
+WHERE de.to_date > CURDATE() 
+AND ((dept_name, (YEAR(CURDATE())-YEAR(hire_date))) IN (
+    SELECT dept_name, max(YEAR(CURDATE()) - YEAR(hire_date)) AS 'Most experimented'
+    FROM employees AS e
+    INNER JOIN dept_emp AS de
+    ON e.emp_no = de.emp_no 
+    INNER JOIN departments AS d
+    ON de.dept_no = d.dept_no
+    WHERE de.to_date > CURDATE() 
+    GROUP BY 1
+    ))
+    ORDER BY 4 DESC
+    LIMIT 10; 
+
+
+```
+
+
+#### Result 
+![List of the most experienced employees](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query9.PNG)
+
+
+#### Analysis
+
+All of the most experienced employees belong to the __Customer Service department with 35 years of experience__ in the company.
+This shows a very high level of loyalty to the company of these employees who most likely have a great deal of valuable expertise. 
+
+#### Recommendations
+
+However, if a change in HR policy is confirmed by recruiting more young developers and focusing more on the AI sectors, a __renewal of employees within Customer Service is to be considered__. This is indeed justified by the increasing demand for support of companies within the IA and BA. 
+
+### Query 10 :  List of the most recently hired employees (that is, the year the most recent employee was recruited)
+
+```{sql, eval=F, echo=T}
+SELECT first_name, last_name, dept_name, YEAR(CURDATE())-YEAR(hire_date) AS 'Years in the company'
+FROM employees AS e
+INNER JOIN dept_emp AS de
+ON e.emp_no = de.emp_no
+INNER JOIN departments AS d
+ON de.dept_no = d.dept_no
+WHERE de.to_date > CURDATE() AND YEAR(CURDATE())-YEAR(hire_date) = (
+        SELECT MIN(YEAR(CURDATE())-YEAR(hire_date))
+        FROM employees)
+ORDER BY 4, 3
+LIMIT 10; 
+
+
+```
+
+
+#### Result 
+![List of the most recently hired employees](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query10.PNG)
+
+
+#### Analysis
+
+No new recruitment since 20 years. 
+
+#### Recommendations
+
+
+Either the database is good and here our analytic team __urgently recommends to hire new engineers.__ 
+Or our team recommends an improvement in the communication regarding the HR database. It must be __urgently__ updated by the __database administrator__ for a complete and accurate analysis. 
+
+
+
+### Query 11 :  Percentage of current job position in the company
+
+```{sql, eval=F, echo=T}
+SELECT title, COUNT(title) AS nb_of_employees, CONCAT(COUNT(title)*100/(SELECT COUNT(*) FROM titles WHERE to_date > CURDATE()), " %") AS percentage
+FROM titles
+WHERE to_date > CURDATE()
+GROUP BY 1
+ORDER BY 1;
+```
+
+
+#### Result 
+![Percentage of current job position in the company](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query11.PNG)
+
+
+#### Analysis
+
+Job positions at Bakers are mainly __Senior Engineer and Senior Staff__ (about three quarters of the total).
+
+#### Recommendations
+
+A first recommendation is to reduce the gap between the number of seniors and the number of engineers and staff in order to __rejuvenate the company in terms of age__ and to have fresh forces ready to work at the top of the senior category.
+A second recommendation is to __increase the number of managers__ a bit, as only 9 managers running a company with more than 100000 employees seem to be very few.
+
+### Query 12 :  Average salary per gender and job position combined
+
+```{sql, eval=F, echo=T}
+SELECT title, gender, ROUND(AVG(salary)) AS avg_salary
+FROM salaries AS s
+INNER JOIN titles AS t
+ON  s.emp_no = t.emp_no
+INNER JOIN employees AS e
+ON s.emp_no = e.emp_no
+WHERE s.to_date > CURDATE() #include only current salary
+AND t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+GROUP BY 1, 2
+ORDER BY 1, 2; 
+```
+
+
+#### Result 
+![Average salary per gender and job position combined](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query12.PNG)
+
+
+#### Analysis
+
+The average salary in all job categories is __very similar between males and females,__ except for the managers category.
+
+#### Recommendations
+
+In order to avoid gender inequalities, it is necessary to try to have the same salary for men and women in every job category, especially managers (if they are at the same level), because a manager who earns less than another just because of gender __can negatively affect the whole environment.__
+
+### Query 13 : Average salary per year in the company
+
+```{sql, eval=F, echo=T}
+SELECT YEAR(CURDATE())-YEAR(hire_date) AS 'Years in the company', ROUND(AVG(salary)) AS avg_salary
+FROM employees AS e
+INNER JOIN titles AS t
+ON  e.emp_no = t.emp_no
+INNER JOIN salaries AS s
+ON  s.emp_no = e.emp_no
+GROUP BY 1
+ORDER BY 1;
+```
+
+
+#### Result 
+![Average salary per years in the company](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query13.PNG)
+
+
+#### Analysis
+
+There is an almost perfect linear correlation between the years worked in the company and the salary.
+
+#### Recommendations
+
+It seems to us a __logical criterion to base the salary on the number of years__ worked in the company so we have no recommendations to make in this respect.
+
+
+### Query 14 : List of the average, maximum and minimum salary of employees in each job position (title) per department .
+
+```{sql, eval=F, echo=T}
+SELECT title, d_name.dept_name, ROUND(MIN(salary)) AS min_salary, ROUND(MAX(salary)) AS max_salary, ROUND(AVG(salary)) AS avg_salary
+FROM salaries AS s
+INNER JOIN titles AS t
+ON  s.emp_no = t.emp_no
+INNER JOIN dept_emp AS d
+ON d.emp_no = s.emp_no
+INNER JOIN departments AS d_name ON d_name.dept_no = d.dept_no
+WHERE d.to_date > CURDATE() #include onlu current d
+AND s.to_date > CURDATE() #include only current salary
+AND t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+GROUP BY 1, 2
+ORDER BY 1, 2 DESC
+LIMIT 10;
+```
+
+
+#### Result 
+![List of the average, maximum and minimum salary of employees in each job position (title) per departement](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query14.PNG)
+
+
+#### Analysis
+
+Here, we can see that a __job position does not have the same average salary__ in all the departments which can increase the inequality between collaborators. 
+In addition, we can see that a job position salary __does not have the same distribution__ (minimum - maximum) in all the departments which can increase the inequality between collaborators. 
+
+#### Recommendations
+
+__Redistribute wages for the same position__ such as the salary does not depend on the department. 
+
+
+
+### Query 15 : List of the salary distribution in each job position (title) per department and per gender.
+
+```{sql, eval=F, echo=T}
+SELECT title, d_name.dept_name, gender, ROUND(MIN(salary)) AS min_salary, ROUND(MAX(salary)) AS max_salary , ROUND(AVG(salary)) AS avg_salary
+FROM employees AS e INNER JOIN
+salaries AS s ON e.emp_no = s.emp_no
+INNER JOIN titles AS t
+ON  s.emp_no = t.emp_no
+INNER JOIN dept_emp AS d
+ON d.emp_no = s.emp_no
+INNER JOIN departments AS d_name ON d_name.dept_no = d.dept_no
+WHERE d.to_date > CURDATE() #include only current d
+AND s.to_date > CURDATE() #include only current salary
+AND t.to_date > CURDATE() #include only current job title for those who had more than one job title in the company
+GROUP BY 1, 2, 3
+ORDER BY 1, 2 , 3 DESC
+LIMIT 10;
+```
+
+
+#### Result 
+![List of the salary distribution in each job position (title) per departement and per gender](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\sql\\Query15.PNG)
+
+#### Analysis
+
+Here, we can see that a __job position salary per gender and per department__ does not have the same distribution in all the departments which can increase the __inequality between collaborators.__   
+We can see that, for some positions, there is only one gender. 
+
+
+#### Recommendations
+
+__Rebalances wages for both gender on the same position__ such as the maximum, the minimum salary, the average salary will not depend on the department. 
+Hire some new collaborators and transfer others in order that positions could be equal in terms of gender. 
+
+***
+
+
+## PART II: NOSQL PROJECT
+
+### Project description:
+
+The mayor of New York will like to reduce pollution in the city by increasing accessibility using public bicycles. You are provided with a **"trips" collection** in the **"citybike" database** found in your MongoDB server. It contains bike trips data from the New York City Citibike service. The documents are composed of: **Bicycle unique identifier**, **Trip start and stop time and date**, **Trip start** and **end stations names** and **geospatial location**, **User information** such as gender, year of birth, and service type (Customer or Subscriber).
+
+### Exercise
+A. Write MongoDB queries that will do the following:  
+1. Display all documents in the "trips" collection.  
+2. Display all documents in the collection except the "tripduration" and "usertype.  
+3. Display the "start station name" and "end station name" of all documents in the collection.  
+4. Display all the trips to "South St & Whitehall St".  
+5. Display the first 5 trips made by "Subscriber" (usertype).  
+6. Display the time of the day with the highest number of trips. 
+7. Display trips made to end station locations with latitude values greater than 40.735238.    
+8. Propose 3 queries that could help understand the behavior of city bikers.  
+B. Propose 7 additional queries that would help the mayor understand the movement of New York city bikers.    
+C. Based on all the queries above, make suggestions on how New York city biking can be improved. Results should be presented as follows:  
+a. Query:  
+b. Result:  
+c. Analysis/interpretation:  
+d. Recommendations:  
+
+
+### Query 1 : Display all documents in the "trips" collection. 
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.find().pretty()
+```
+
+Atlas UI 
+No filter
+
+#### Result
+
+![Results 1 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query1.UI.PNG)
+
+
+![Results 1 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query1.S.PNG)
+
+#### Analysis
+
+New York City's citybike database is well-structured. It contains **1 990 273 trips** in a **Document Store** structure encoded into JSON format. The description delivered above of the database corresponds well to the fields in our database. 
+
+#### Recommendations
+
+Document Store in MongoDB is a __very good database storage solution.__ In case New York City is looking to change its database structure, it could consider __Amazon DynamoDB and a Key-Value Store structure__ (key= travel id). 
+__In this case,__ it will have to pay attention to the lack of consistency at the database level (no ACID test).
+
+
+### Query 2 : Display all documents in the collection except the "tripduration" and "usertype. 
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.find({}, {tripduration :0, usertype:0}).pretty()
+```
+
+**Atlas UI**      
+
+PROJECT:   
+{tripduration :0, usertype:0}
+
+#### Result
+
+![Results 2 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query2.UI.PNG)
+
+
+![Results 2 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query2.SH.PNG)
+
+#### Analysis
+No particular analysis for this query. 
+
+
+### Query 3 : Display the "start station name" and "end station name" of all documents in the collection
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.find({}, {'start station name' :1, 'end station name':1, _id:0}).pretty()
+```
+
+**Atlas UI**      
+
+PROJECT:    
+{'start station name' :1, 'end station name':1, _id:0}
+ 
+
+#### Result
+
+![Results 3 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query3.UI.PNG)
+
+
+![Results 3 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query3.SH.PNG)
+
+#### Analysis
+
+Each start station name and end station name are __well written__.  
+
+#### Recommendations
+
+
+It would be interesting to draw up **a map** of the trips thanks to the coordinates of each station. 
+
+
+### Query 4 : Display all the trips to "South St & Whitehall St". 
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.find({"end station name":"South St & Whitehall St"}).pretty() 
+```
+
+Atlas UI   
+
+PROJECT:   
+{"end station name":  "South St & Whitehall St"}
+
+
+#### Result
+
+![Results 4 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query4.UI.PNG)
+
+
+![Results 4 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query4.SH.PNG)
+
+#### Analysis
+
+South St & Whitehall St bike station doesn't seem to be a __very busy station.__ Compared to the total number of trips, it totals only 3287 __i.e 0.16 %  of total trips__. 
+
+
+#### Recommendation
+
+New York City Hall should be attentive to __underused__ stations as well as to stations with __strong influence__ during peak hours. Thus, it would be interesting for the town hall to implement __more bike transfers__ from less used stations to the most used stations. This could lead to more savings. 
+
+### Query 5 : Display the first 5 trips made by "Subscriber" (usertype).
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $match : {usertype : "Subscriber"}}, { $group: { _id : {start_station_name :"$start station name", end_station_name : "$end station name", usertype : "$usertype"}, count:{$sum:1}}}, {$sort : { count : -1 }}, {$limit : 5} ], {allowDiskUse: true})
+```
+
+
+#### Result
+
+![Results 5 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query5.UI.PNG)
+
+
+![Results 5 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query5.SH.PNG)
+
+
+### Query 6 : Display the time of the day with the highest number of trips. 
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $project : { hour : { $hour : "$start time"}}}, { $group: { _id : "$hour", count:{$sum:1}}}, {$sort : { "count" : -1}}, {$limit : 1}])
+```
+
+Atlas UI   
+In aggregations
+
+
+
+#### Result
+
+![Results 6 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query6.SH.PNG)
+
+#### Analysis
+
+Our query gives us the following result: the id here represents the time slot with the highest number of trips. 
+The analysis is therefore as follows: the time slot during which there is the greatest use of the service is between **5:00 p.m**. and **6:00 p.m**., for 200561 trips (i.e. 10% of the trips). This likely corresponds to the **end of the working day**. 
+
+
+#### Recommendations
+
+The bike service must therefore be particularly vigilant during this period of time __by maximizing the number of bikes available at each station. __
+The service can also consider increasing its visibility for __this particular period.__ 
+For instance, offering __lower prices__ for this time slot, or partnering with New York City companies to promote cycling for __work-to-home commuting.__ 
+
+### Query 7 :Display trips made to end station locations with latitude values greater than 40.735238. 
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.find({ "end station location.coordinates.1" : { $gt: 40.735238}}).pretty()
+```
+
+Atlas UI   
+
+FILTER: 
+{"end station location.coordinates.1" : { $gt: 40.735238}}
+
+
+#### Result
+
+![Results 7 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query7.UI.PNG)
+
+
+![Results 7 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query7.SH.PNG)
+
+#### Analysis
+
+**1 106 649 trips** ended at a station with a latitude greater than 40.735238 i.e. more than 55% of all trips. 
+This corresponds loosely to the neighborhoods above Brooklyn and one half of the Queens.
+We can analyze that there is a weak correlation between the number of inhabitants and the number of trips. 
+Indeed, Manhattan, Queens and Bronx represent more than **2 /3 of the population** of New York and here only **half of the trips**. 
+
+***
+
+### Query 8.1 : Display the most frequent circuit
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $group: { _id : {start_station_name :"$start station name", end_station_name : "$end station name"}, count:{$sum:1}}}, {$sort : { count : -1 }} ])
+```
+
+
+
+#### Result
+
+![Results 8.1 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query8.3.UI.PNG)
+
+![Results 8.1 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query8.3.SH.PNG)
+
+
+#### Analysis
+
+The first and most frequent circuit is around **Central Park**. Pastoral circuit, it is probably used more for leisure purposes than for commuting to and from work.  
+Concerning the second most frequent circuit, we notice the departure from Pershing Square which is located in front of the **Grand Central Terminal** to go to W33 St and 7 AVE. This could concern more **newyorkers commuters**.   
+In general, we notice that the bike trips cross the **major avenues** that New York knows well. 
+
+#### Recommendations
+
+Because of the great use in Central park, it would be interesting to encourage the **installation of bike station** within and around the park. 
+A more general recommendation here regarding the use of bicycles on **major avenues** : a special **bike lane installation** on the major avenues raised here would be a great advantage for cyclists and could reinforce its use. This could be a __priority for the mayor of New York__. 
+
+
+### Query 8.2 : Display the most frequent circuit according to the usertype
+
+Shell
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $group: { _id : {start_station_name :"$start station name", end_station_name : "$end station name", usertype : "$usertype"}, count:{$sum:1}}}, {$sort : { count : -1 }} ], {allowDiskUse: true})
+```
+
+
+
+#### Result
+
+![Results 8.2 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query8.11.UI.PNG)
+
+![Results 8.2 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query8.11.SH.PNG)
+
+
+#### Analysis
+
+This query confirms 8.1 conclusion about Central Park circuit. We can indeed note that the circuit around Central park is mostly used by customers, either tourists or non regular users. 
+
+#### Recommendations
+
+In order to promote the use of bicycles for tourism or leisure, New York City could promote the **advertising** of the service by tourist agencies or hotels. Propose for example __other circuit to make by bike__, __special 1-week offer, reduced prices with museums__ etc...  
+
+### Query 8.3 : Display the most frequent circuit according to the hour
+
+
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $group: { _id : {start_station_name :"$start station name", end_station_name : "$end station name", hour : { $hour : "$start time"}}, count:{$sum:1}}}, {$sort : { count : -1 }} ], {allowDiskUse: true})
+```
+
+
+#### Result
+
+![Results 8.3 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query8.4.UI.PNG)
+
+![Results 8.3 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query8.4.SH.PNG)
+
+
+#### Analysis
+From this query, we can decompose two main types of start : 
+
+First, departures from Pershing Square North and Penn Station Valet stations are close to major New York City **train stations** (respectively Central Station and Pennsylvania Station). This concerns both morning and evening departures. 
+
+Then, departures such as the one from E7 st and Avenue A. These departures are made by **the inhabitants** of the southern district of Manhattan who leave for working in the morning. Just like the departure from Broadway and 24 st, we will call these departures, **"direct departures"**. In contrast to **"indirect departures"** from bicycle stations close to train stations . 
+
+#### Recommendations
+
+First of all, concerning indirect departures, our team would like to stress out that this is a good sign of **mutli-mobility service** : in order to relieve congestion in the city center, use public transportation for long trips and bicycles for short trips. 
+Thus, the main aim is to **strengthen** the bicycle supply around New York City's main **central stations** and encourage people to use bicycles for **short trips** in the city.  
+
+For **direct departures** from residential areas, such as morning departures, it is important to **reinforce** the presence of stations and available bicycles in different departure areas. 
+
+***
+
+Let's strengthen our analysis now with additional queries ! 
+
+***
+
+### Query B.1 : Average trip time
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $group: { _id:0, tripAvg: {$avg: { $divide : [{$subtract: ["$stop time", "$start time"]}, 3600000]}}}}])
+```
+
+#### Result
+
+![Results B.1 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.1.UI.PNG)
+
+![Results B.1 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.1.SH.PNG)
+
+
+#### Analysis
+
+The average trip time is __0.26 h i.e 15.6 minutes.__ This is relatively low usage time. Indeed, compared to the average usage time of the Velib' service used in Paris which is 36 minutes, this shows a __low use of the service.__     
+If we take the average speed of 16km/h of a cyclist. This corresponds to an average distance traveled of 4 km which is __very low. __
+
+
+#### Recommendations
+
+Several recommendations :  
+in addition to the increase of stations number, the price could have a __dissuasive effect__ on the time of use. 
+For instance, __offering 30 minutes of free ride__ like the Velib service could have a real effect on the time of use and __thus the distance cycled in NY City. __
+
+
+### Query B.2 : Display the most frequent circuit according to the gender
+
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $group: { _id : {start_station_name :"$start station name", end_station_name : "$end station name", gender : "$gender"}, count:{$sum:1}}}, {$sort : { count : -1 }} ], {allowDiskUse: true})
+```
+
+#### Result
+
+![Results B.2 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.3.UI.PNG)
+
+![Results B.2 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.3.SH.PNG)
+
+
+#### Analysis
+
+For our most frequent tour, gender unknown. This seems normal at this stage: we had already analyzed that this type of circuit is mainly used by Customers (tourists or non-regular users) who are not registered in the platform and who do not inform their gender.    
+
+For the following circuits, very interesting point: the gender 1, male is **over-represented**. This could indicate an __under-use of the service by women. __
+
+
+#### Recommendations
+
+New query to do to confirm this analysis in order to count the number of women using the network.
+If the analysis is confirmed, the city hall must make it a priority to foster the number of women using the service.   
+
+This could be due in part to the __lack of bicycle safety in New York City__. The city should implement more __bike-friendly routes and green mobility.__
+
+
+### Query B.3 : Cout by user type and by gender 
+
+
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $group: { _id : {usertype :"$usertype", gender : "$gender"}, count:{$sum:1}}}, {$sort : { count : -1 }} ])
+```
+
+#### Result
+
+![Results B.3 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.7.UI.PNG)
+
+![Results B.3 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.7.SH.PNG)
+
+
+#### Analysis
+
+The first user of the New York citibyke service is a __male subscriber to the service __(1 430 749). They represent more than __70% of the users__. The previous analysis of the __under-representation__ of women is therefore confirmed here. Women, in total, account for only __20% of users__. With occasional users, they represent only __7% of the service. __
+
+#### Recommendations
+
+> Reinforce the safety of bicycle noise in the city.     
+> Create an advertising campaign to promote cycling among women.   
+> Strengthen bicycle tours in the city. 
+  
+
+
+
+### Query B.4 : Average age of bikers 
+
+
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $match : {"birth year": {$type:"int"}}}, {$group: { _id : 0, AvgAge : {$avg : { $subtract : [ {$convert : {input : { $year : "$$NOW"}, to : "long"}}, {$convert : {input : "$birth year", to : "long"}}]}}}}])
+```
+
+#### Result
+
+![Results B.4 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.4.UI.PNG)
+
+![Results B.4 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.4.SH.PNG)
+
+
+#### Analysis
+
+The average age is __43__. Our average user of the service is therefore a 43-year-old male subscriber to the service. 
+
+
+### Query B.5 : How many bikes have been used ? 
+
+
+```{sql, eval=F, echo=T}
+db.trips.distinct( "bikeid" ).length
+```
+
+#### Result
+
+![Results B.5 - SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.13.SH.PNG)
+
+
+#### Analysis
+
+In total, over the period studied, __7 771 bicycles were used__. 
+For 1 990 273 trips, everything else being equal, this represents a rate of use per bike of 
+__256 trips__ per bike during the 3 month-period or __3 trips per bike per day.__ 
+
+#### Recommendations
+
+Although this utilization rate per bike appears to be quite low, our analytic team recommends to the city council __not to give__ into the pressure to __reduce the number of available bicycles.__
+On the contrary, the __more bikes available __(and particularly at the hot spots identified above), the time of usage and therefore the higher the rate of use per bike. 
+
+### Query B.6 : From how many stations ?  
+```{sql, eval=F, echo=T}
+
+db.trips.distinct( "start station id" ).length
+```
+cf Results below. 
+
+### Query B.7 : To how many stations ?  
+```{sql, eval=F, echo=T}
+db.trips.distinct( "end station id" ).length
+```
+
+
+#### Result
+
+![Results B.7 -SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.14.SH.PNG)
+
+
+
+#### Analysis
+
+We must be careful in our analysis. There are no more stations on one side than on the other since there is a fixed number of stations.    
+
+This request, however, gives us the following information: __there is more point of arrival than point of departure in the use of the service.__
+
+In other words, cyclists leave more __from the same place__ (probably from places close to railway stations) and __disperse more on arrival__ (probably to go home, to work or to their meeting point).
+
+
+#### Recommendations
+
+This confirms the use of the service identified above for work - home commuters and reinforces our team's recommendation to promote the __multi-mobility of users__ (departures from major stations) to workplaces in the city. This, notably by promoting __the more dispersed installation__ of bicycle stations in the city. 
+
+
+### Query B.8 : What is the day Of Week with the biggest number of trips ?  
+
+```{sql, eval=F, echo=T}
+db.trips.aggregate([{ $group: { _id : {day : { $dayOfWeek : "$start time"}}, count:{$sum:1}}}, {$sort : { count : -1 }} ])
+```
+
+#### Result
+
+![Results B.8 - UI](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.11.UI.PNG)
+
+![Results B.8 -SHELL](C:\\Users\\swp\\Documents\\_Perso\\Cours\\M2\\U5. Data Management\\Database Management\\0.Project\\nosql\\Query9.11.SH.PNG)
+
+
+
+#### Analysis
+
+We consider the standard ISO 8601 for the number of the day. 
+
+From this request, we can establish the following classification in terms of use per day: Friday comes first, then Thursday, Wednesday, Saturday, Tuesday, Sunday and then Monday .
+
+So we can make the analysis that the bike is much __more used at the end of the work week.__ Maybe the workers feel more stressed, or have more time, or are in better shape to get on the bike. 
+
+For weekends, we can see a low number of users, which reflects low usage outside of commuting. 
+
+#### Recommendations
+
+For the first point, one recommendation would be to install __more electric bicycles__. Indeed, perhaps installing more of this type of bike would encourage users to use it every day, having more confidence in this means of transportation in terms of the time needed for their trip or because it would require less energy in the morning or when returning home in the evening.    
+
+As for the second point, it seems clear now that New York City should encourage __more cycling outside the home-work circuits__. 
+
+
+Thank you for reading ! 
+
+
+
